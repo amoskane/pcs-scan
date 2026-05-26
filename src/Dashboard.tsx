@@ -24,10 +24,11 @@ const C = {
   cyan: '#4ec9b0',
   red: '#ff5c5c',
   green: '#7dd87d',
-  e3: '#ff5c5c',
-  e8: '#ffb627',
-  e17: '#e8e6e0',
-  e50: '#4ec9b0',
+  blue: '#4a9eff',
+  e3: '#7dd87d',   // green  — fastest, freshest signal
+  e8: '#ffd34e',   // yellow — short-term
+  e17: '#ff9933',  // orange — medium-term
+  e50: '#ff5c5c',  // red    — slow baseline
 };
 
 const MONO = 'JetBrains Mono, monospace';
@@ -41,10 +42,13 @@ function Spark({ data, level }: { data: SeriesPoint[]; level: SignalLevel }) {
   const min = Math.min(...allPrices) * 0.98;
   const max = Math.max(...allPrices) * 1.02;
 
-  // RSI panel highlight: green when strict reversal confirmed, amber when
-  // oversold but unconfirmed, cyan otherwise.
-  const rsiStroke = level === 'strict' ? C.green : level === 'loose' ? C.amber : C.cyan;
-  const refLine30Stroke = level !== 'none' ? rsiStroke : C.textFaint;
+  // RSI line is always blue — neutral oscillator color, free of signal-tier
+  // semantics (those are already conveyed by border, ticker color, sort order).
+  // The 30-line tints amber/green when a signal hits, so the threshold breach
+  // is still visible without overloading the RSI line itself.
+  const rsiStroke = C.blue;
+  const refLine30Stroke =
+    level === 'strict' ? C.green : level === 'loose' ? C.amber : C.textFaint;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 200 }}>
