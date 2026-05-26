@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-26T20:21:44.047Z",
+  "generatedAt": "2026-05-26T22:56:15.329Z",
   "asOfDate": "2026-05-22",
   "rows": [
     {
@@ -574,7 +574,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 58.3560237041187,
         "extPct": 3.0066052602618205,
         "close": 425.95
@@ -1153,7 +1153,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 53.827744850163924,
         "extPct": -0.3850818316818671,
         "close": 215.34
@@ -1732,7 +1732,7 @@
         }
       ],
       "signal": {
-        "overbought": true,
+        "oversold": false,
         "rsi": 78.57566019850728,
         "extPct": 5.22071634677888,
         "close": 308.81
@@ -2311,7 +2311,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 57.77826986340186,
         "extPct": 0.7439770941667359,
         "close": 266.27
@@ -2890,7 +2890,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 45.34820075229309,
         "extPct": -0.8113025781766392,
         "close": 610.42
@@ -3469,7 +3469,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 55.095079652662164,
         "extPct": 0.8320149599061664,
         "close": 418.5
@@ -4048,7 +4048,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 57.47903308269396,
         "extPct": -0.1285251720807193,
         "close": 383.03
@@ -4627,7 +4627,7 @@
         }
       ],
       "signal": {
-        "overbought": true,
+        "oversold": false,
         "rsi": 72.64183912348864,
         "extPct": 13.059249716056398,
         "close": 467.64
@@ -5206,7 +5206,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 43.870361671182,
         "extPct": -0.9213572722694358,
         "close": 88.595
@@ -5785,7 +5785,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 47.53610535651712,
         "extPct": -0.18100044374757546,
         "close": 136.84
@@ -6364,7 +6364,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 53.23087011369283,
         "extPct": -0.426615840024379,
         "close": 414.01
@@ -6943,7 +6943,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 44.56134668379703,
         "extPct": -5.3434554280898,
         "close": 184.97
@@ -7522,7 +7522,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 44.73582166666527,
         "extPct": -6.471246824897486,
         "close": 159.93
@@ -8101,7 +8101,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 42.892209810920995,
         "extPct": -2.497274506869871,
         "close": 15.625
@@ -8680,7 +8680,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 52.51062796671117,
         "extPct": 0.8415551786845792,
         "close": 51.79
@@ -9259,7 +9259,7 @@
         }
       ],
       "signal": {
-        "overbought": true,
+        "oversold": false,
         "rsi": 70.0323942597425,
         "extPct": 14.523734669568395,
         "close": 14.95
@@ -9838,7 +9838,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 68.13367688976516,
         "extPct": 9.848056811183556,
         "close": 119.85
@@ -10417,7 +10417,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 50.947945009133434,
         "extPct": 1.1570981376725655,
         "close": 180.1
@@ -10996,7 +10996,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 59.59304400159795,
         "extPct": 3.4300317165406833,
         "close": 192.09
@@ -11575,7 +11575,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 52.64584668004009,
         "extPct": 0.9061741602457953,
         "close": 306.34
@@ -12154,7 +12154,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 34.0711737253108,
         "extPct": -6.514016824932105,
         "close": 120.26
@@ -12733,7 +12733,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 50.27224692949235,
         "extPct": -0.8396472643854923,
         "close": 1027.85
@@ -13312,7 +13312,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 57.998106458704214,
         "extPct": 1.2397761104475935,
         "close": 328.9
@@ -13891,7 +13891,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 48.113099079557195,
         "extPct": -0.19844496033008538,
         "close": 498.55
@@ -14470,7 +14470,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 52.50873534233907,
         "extPct": 0.6460075664906016,
         "close": 154.83
@@ -15049,7 +15049,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 54.06462235707056,
         "extPct": 1.2466859649506836,
         "close": 191.43
@@ -15628,7 +15628,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 40.28683653255688,
         "extPct": -3.6540133028595885,
         "close": 71.83
@@ -16207,7 +16207,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 41.62863272663581,
         "extPct": -3.689124814410575,
         "close": 103.02
@@ -16786,7 +16786,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 66.30375717512152,
         "extPct": 9.412598582362664,
         "close": 172.23
@@ -17365,7 +17365,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 65.14349882890664,
         "extPct": 9.216141085483258,
         "close": 751.09
@@ -17944,7 +17944,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 48.686011435266835,
         "extPct": -0.8084459106794383,
         "close": 103
@@ -18523,7 +18523,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 44.815765611400636,
         "extPct": -2.5531183868164655,
         "close": 219.03
@@ -19102,7 +19102,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 55.65821565630396,
         "extPct": 2.849910871350558,
         "close": 302.8
@@ -19681,7 +19681,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 66.32696227966346,
         "extPct": 4.801540645748949,
         "close": 996.73
@@ -20260,7 +20260,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 67.58660278740975,
         "extPct": 4.101593273464813,
         "close": 200.95
@@ -20839,7 +20839,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 46.12871117747852,
         "extPct": -0.009145187838687547,
         "close": 76.4
@@ -21418,7 +21418,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 51.46916308687353,
         "extPct": 0.15398132232059866,
         "close": 125.06
@@ -21997,7 +21997,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 46.565297350855154,
         "extPct": 0.09641450286485007,
         "close": 25.255
@@ -22576,7 +22576,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 58.02658430394409,
         "extPct": 1.8247786652210403,
         "close": 48.36
@@ -23155,7 +23155,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 47.346616827503674,
         "extPct": 0.037129390054329824,
         "close": 25.9
@@ -23734,7 +23734,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 58.23784434161144,
         "extPct": 2.289835385854811,
         "close": 233.03
@@ -24313,7 +24313,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 68.27857395185464,
         "extPct": 2.521660127469061,
         "close": 388.545
@@ -24892,7 +24892,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 68.59701094048536,
         "extPct": 7.187894982449613,
         "close": 1065.6
@@ -25471,7 +25471,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 61.857470271760164,
         "extPct": 2.9529997450150285,
         "close": 215.755
@@ -26050,7 +26050,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 36.525434548106624,
         "extPct": -3.0604931557154385,
         "close": 44.23
@@ -26061,7 +26061,7 @@
       "symbol": "SQ",
       "series": [],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": null,
         "extPct": null,
         "close": null
@@ -26640,7 +26640,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 56.152761407639154,
         "extPct": 1.606837688754959,
         "close": 25.14
@@ -27219,7 +27219,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 45.64802587863367,
         "extPct": -0.7832011164045752,
         "close": 14.23
@@ -27798,7 +27798,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 37.73224144566346,
         "extPct": -5.060953186304409,
         "close": 5.845
@@ -28377,7 +28377,7 @@
         }
       ],
       "signal": {
-        "overbought": false,
+        "oversold": false,
         "rsi": 32.82185246435478,
         "extPct": -11.799400983815133,
         "close": 5.2
