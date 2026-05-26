@@ -1,9 +1,9 @@
 # PCS Morning Scan
 
-Daily pre-market scan for put credit spread candidates. Looks at the top ~50 stocks by options volume, flags names where:
+Daily pre-market scan for put credit spread candidates. Looks at the top ~50 stocks by options volume, flags oversold names showing reversal — where:
 
 ```
-RSI(14) > 70  ∧  close > EMA(8)  ∧  close > EMA(17)
+RSI(14) < 35  ∧  EMA(3) > EMA(8)
 ```
 
 GitHub Actions runs the scan once each weekday morning, commits `public/data.json`, Vercel auto-redeploys, dashboard loads instantly.

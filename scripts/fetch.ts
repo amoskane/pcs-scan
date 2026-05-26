@@ -105,12 +105,18 @@ function buildSeries(bars: AlpacaBar[]): SeriesPoint[] {
 
 function evaluate(series: SeriesPoint[]): TickerRow['signal'] {
   const latest = series[series.length - 1];
-  if (!latest || latest.rsi == null || latest.e8 == null || latest.e17 == null) {
-    return { overbought: false, rsi: null, extPct: null, close: null };
+  if (!latest || latest.rsi == null || latest.e3 == null || latest.e8 == null || latest.e17 == null) {
+    return { oversold: false, rsi: null, extPct: null, close: null };
   }
-  const overbought = latest.rsi > 70 && latest.close > latest.e8 && latest.close > latest.e17;
+  // Oversold reversal candidate for put credit spreads:
+  //   RSI(14) < 35  (beaten down, not catastrophically — leaves room for bounce)
+  //   AND 3-EMA > 8-EMA  (short-term momentum has turned back up)
+  const oversold = latest.rsi < 35 && latest.e3 > latest.e8;
+  // EXT here = (close - EMA17) / EMA17. Negative means below EMA17 (still in
+  // downtrend's wake); positive means already back above. Useful as "how far
+  // it still has to climb back."
   const extPct = ((latest.close - latest.e17) / latest.e17) * 100;
-  return { overbought, rsi: latest.rsi, extPct, close: latest.close };
+  return { oversold, rsi: latest.rsi, extPct, close: latest.close };
 }
 
 async function main() {
@@ -128,7 +134,7 @@ async function main() {
       rows.push({
         symbol,
         series: [],
-        signal: { overbought: false, rsi: null, extPct: null, close: null },
+        signal: { oversold: false, rsi: null, extPct: null, close: null },
         error: `insufficient bars (${bars.length})`,
       });
       continue;
@@ -141,7 +147,7 @@ async function main() {
     if (lastDate > mostRecentDate) mostRecentDate = lastDate;
 
     rows.push({ symbol, series: displaySeries, signal, error: null });
-    const flag = signal.overbought ? '🔥 OB' : '  --';
+    const flag = signal.oversold ? '🟢 OS' : '  --';
     console.log(
       `  ${symbol.padEnd(6)} ${flag}  RSI ${signal.rsi!.toFixed(1).padStart(5)} ` +
         `EXT ${signal.extPct! >= 0 ? '+' : ''}${signal.extPct!.toFixed(1)}%`,
@@ -158,10 +164,10 @@ async function main() {
   await writeFile(OUTPUT_PATH, JSON.stringify(data, null, 2));
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  const obCount = rows.filter((r) => r.signal.overbought).length;
+  const osCount = rows.filter((r) => r.signal.oversold).length;
   const errCount = rows.filter((r) => r.error).length;
   console.log(
-    `\nDone in ${elapsed}s — ${obCount} overbought, ${errCount} errors, as of ${mostRecentDate}`,
+    `\nDone in ${elapsed}s — ${osCount} oversold, ${errCount} errors, as of ${mostRecentDate}`,
   );
   console.log(`Wrote ${OUTPUT_PATH}`);
 }

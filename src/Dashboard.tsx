@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import type { ScanData, TickerRow, SeriesPoint } from '../scripts/types';
 
-type Filter = 'overbought' | 'all';
+type Filter = 'oversold' | 'all';
 
 const C = {
   bg: '#0a0a0a',
@@ -23,6 +23,7 @@ const C = {
   amber: '#ffb627',
   cyan: '#4ec9b0',
   red: '#ff5c5c',
+  green: '#7dd87d',
   e3: '#ff5c5c',
   e8: '#ffb627',
   e17: '#e8e6e0',
@@ -31,7 +32,7 @@ const C = {
 
 const MONO = 'JetBrains Mono, monospace';
 
-function Spark({ data, overbought }: { data: SeriesPoint[]; overbought: boolean }) {
+function Spark({ data, oversold }: { data: SeriesPoint[]; oversold: boolean }) {
   const closes = data.map((d) => d.close).filter((v) => v != null) as number[];
   const e50vals = data.map((d) => d.e50).filter((v) => v != null) as number[];
   const allPrices = [...closes, ...e50vals];
@@ -80,12 +81,12 @@ function Spark({ data, overbought }: { data: SeriesPoint[]; overbought: boolean 
             axisLine={{ stroke: C.grid }}
             tickLine={false}
           />
-          <ReferenceLine y={70} stroke={overbought ? C.red : C.textFaint} strokeDasharray="2 3" />
-          <ReferenceLine y={30} stroke={C.textFaint} strokeDasharray="2 3" />
+          <ReferenceLine y={70} stroke={C.textFaint} strokeDasharray="2 3" />
+          <ReferenceLine y={30} stroke={oversold ? C.green : C.textFaint} strokeDasharray="2 3" />
           <Line
             type="monotone"
             dataKey="rsi"
-            stroke={overbought ? C.red : C.cyan}
+            stroke={oversold ? C.green : C.cyan}
             dot={false}
             strokeWidth={1.2}
             isAnimationActive={false}
@@ -108,13 +109,13 @@ function Card({ row }: { row: TickerRow }) {
       </div>
     );
   }
-  const ob = signal.overbought;
+  const os = signal.oversold;
   return (
     <div
       style={{
         background: C.panel,
-        border: `1px solid ${ob ? C.amber : C.grid}`,
-        borderLeftWidth: ob ? 3 : 1,
+        border: `1px solid ${os ? C.amber : C.grid}`,
+        borderLeftWidth: os ? 3 : 1,
         padding: '10px 12px 12px',
         height: 256,
       }}
@@ -125,7 +126,7 @@ function Card({ row }: { row: TickerRow }) {
             fontFamily: MONO,
             fontSize: 14,
             fontWeight: 600,
-            color: ob ? C.amber : C.text,
+            color: os ? C.amber : C.text,
             letterSpacing: '0.04em',
           }}
         >
@@ -147,19 +148,19 @@ function Card({ row }: { row: TickerRow }) {
       >
         <span>
           RSI{' '}
-          <span style={{ color: ob ? C.red : (signal.rsi ?? 0) > 70 ? C.amber : C.text }}>
+          <span style={{ color: os ? C.green : (signal.rsi ?? 100) < 35 ? C.amber : C.text }}>
             {signal.rsi?.toFixed(1)}
           </span>
         </span>
         <span>
           EXT{' '}
-          <span style={{ color: (signal.extPct ?? 0) > 5 ? C.amber : C.text }}>
+          <span style={{ color: (signal.extPct ?? 0) < -5 ? C.amber : C.text }}>
             {(signal.extPct ?? 0) >= 0 ? '+' : ''}
             {signal.extPct?.toFixed(1)}%
           </span>
         </span>
       </div>
-      <Spark data={series} overbought={ob} />
+      <Spark data={series} oversold={os} />
     </div>
   );
 }
@@ -198,7 +199,7 @@ function Legend() {
 export function Dashboard() {
   const [data, setData] = useState<ScanData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('overbought');
+  const [filter, setFilter] = useState<Filter>('oversold');
 
   useEffect(() => {
     // Cache-bust so refreshes always get the latest checked-in scan.
@@ -213,10 +214,11 @@ export function Dashboard() {
     return [...data.rows].sort((a, b) => {
       if (a.error && !b.error) return 1;
       if (!a.error && b.error) return -1;
-      const aOb = a.signal.overbought ? 1 : 0;
-      const bOb = b.signal.overbought ? 1 : 0;
-      if (aOb !== bOb) return bOb - aOb;
-      return (b.signal.rsi ?? 0) - (a.signal.rsi ?? 0);
+      const aOs = a.signal.oversold ? 1 : 0;
+      const bOs = b.signal.oversold ? 1 : 0;
+      if (aOs !== bOs) return bOs - aOs;
+      // Within hits: lowest RSI first (most oversold). Within non-hits: same.
+      return (a.signal.rsi ?? 100) - (b.signal.rsi ?? 100);
     });
   }, [data]);
 
@@ -239,9 +241,9 @@ export function Dashboard() {
     );
   }
 
-  const obCount = data.rows.filter((r) => r.signal.overbought).length;
+  const osCount = data.rows.filter((r) => r.signal.oversold).length;
   const errCount = data.rows.filter((r) => r.error).length;
-  const visible = filter === 'overbought' ? sorted.filter((r) => r.signal.overbought) : sorted;
+  const visible = filter === 'oversold' ? sorted.filter((r) => r.signal.oversold) : sorted;
 
   return (
     <div
@@ -278,8 +280,8 @@ export function Dashboard() {
             MORNING SCAN · PUT CREDIT SPREADS
           </div>
           <div style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.01em' }}>
-            Overbought<span style={{ color: C.textFaint }}> / </span>
-            <span style={{ color: C.textDim }}>RSI &gt; 70 ∧ close &gt; EMA(8) ∧ close &gt; EMA(17)</span>
+            Oversold reversal<span style={{ color: C.textFaint }}> / </span>
+            <span style={{ color: C.textDim }}>RSI &lt; 35 ∧ EMA(3) &gt; EMA(8)</span>
           </div>
         </div>
         <div
@@ -292,8 +294,8 @@ export function Dashboard() {
           }}
         >
           <div>
-            UNIVERSE <span style={{ color: C.text }}>{data.rows.length}</span> · OB{' '}
-            <span style={{ color: C.amber }}>{obCount}</span> · ERR{' '}
+            UNIVERSE <span style={{ color: C.text }}>{data.rows.length}</span> · OS{' '}
+            <span style={{ color: C.amber }}>{osCount}</span> · ERR{' '}
             <span style={{ color: errCount ? C.red : C.text }}>{errCount}</span>
           </div>
           <div>
@@ -316,7 +318,7 @@ export function Dashboard() {
         <div style={{ display: 'flex', gap: 4 }}>
           {(
             [
-              ['overbought', `OVERBOUGHT ONLY (${obCount})`],
+              ['oversold', `OVERSOLD ONLY (${osCount})`],
               ['all', `ALL (${data.rows.length})`],
             ] as const
           ).map(([key, label]) => (
@@ -351,7 +353,7 @@ export function Dashboard() {
             border: `1px dashed ${C.grid}`,
           }}
         >
-          No overbought candidates today. The market isn't extended — patience.
+          No oversold reversal candidates today. Nothing's beaten down enough yet — patience.
         </div>
       )}
 
@@ -380,7 +382,7 @@ export function Dashboard() {
       >
         DATA polygon.io · daily adjusted bars · 400-day lookback, last 63 sessions shown<br />
         EMA seed = SMA(period) · RSI = Wilder's smoothed, 14 period<br />
-        SIGNAL overbought ≡ RSI &gt; 70 ∧ close &gt; EMA(8) ∧ close &gt; EMA(17) · EXT = (close − EMA17) / EMA17<br />
+        SIGNAL oversold reversal ≡ RSI &lt; 35 ∧ EMA(3) &gt; EMA(8) · EXT = (close − EMA17) / EMA17<br />
         FETCH GitHub Actions cron, 13:30 UTC weekdays
       </div>
     </div>

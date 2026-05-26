@@ -25,7 +25,7 @@ export type TickerRow = {
   symbol: string;
   series: SeriesPoint[]; // last 63 trading days
   signal: {
-    overbought: boolean;
+    oversold: boolean;
     rsi: number | null;
     extPct: number | null;
     close: number | null;
