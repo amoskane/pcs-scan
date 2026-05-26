@@ -1,10 +1,16 @@
 # PCS Morning Scan
 
-Daily pre-market scan for put credit spread candidates. Looks at the top ~50 stocks by options volume, flags oversold names showing reversal — where:
+Daily pre-market scan for put credit spread candidates. Looks at the top ~50 stocks by options volume, flags oversold names at two strictness tiers:
 
 ```
-RSI(14) < 35  ∧  EMA(3) > EMA(8)
+STRICT  RSI(14) < 35  ∧  EMA(3) > EMA(8)
+        confirmed momentum reversal — best signal
+
+LOOSE   RSI(14) < 35  ∧  sideways within ±3% for N days  ∧  prior decline
+        base-forming pattern — the bleeding has stopped (N = 3 or 5, toggled in UI)
 ```
+
+Dashboard tabs let you flip between tiers; STRICT is the default. The LOOSE tab has a 3D/5D sub-toggle for how long the sideways base needs to have lasted. When a tab is empty (common in trending markets), the empty-state message links you to the next-best tier or window.
 
 GitHub Actions runs the scan once each weekday morning, commits `public/data.json`, Vercel auto-redeploys, dashboard loads instantly.
 

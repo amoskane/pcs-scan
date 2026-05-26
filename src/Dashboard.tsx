@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import type { ScanData, TickerRow, SeriesPoint } from '../scripts/types';
 
-type Filter = 'oversold' | 'all';
+type Filter = 'strict' | 'loose' | 'all';
 
 const C = {
   bg: '#0a0a0a',
@@ -32,12 +32,19 @@ const C = {
 
 const MONO = 'JetBrains Mono, monospace';
 
-function Spark({ data, oversold }: { data: SeriesPoint[]; oversold: boolean }) {
+type SignalLevel = 'strict' | 'loose' | 'none';
+
+function Spark({ data, level }: { data: SeriesPoint[]; level: SignalLevel }) {
   const closes = data.map((d) => d.close).filter((v) => v != null) as number[];
   const e50vals = data.map((d) => d.e50).filter((v) => v != null) as number[];
   const allPrices = [...closes, ...e50vals];
   const min = Math.min(...allPrices) * 0.98;
   const max = Math.max(...allPrices) * 1.02;
+
+  // RSI panel highlight: green when strict reversal confirmed, amber when
+  // oversold but unconfirmed, cyan otherwise.
+  const rsiStroke = level === 'strict' ? C.green : level === 'loose' ? C.amber : C.cyan;
+  const refLine30Stroke = level !== 'none' ? rsiStroke : C.textFaint;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 200 }}>
@@ -82,11 +89,11 @@ function Spark({ data, oversold }: { data: SeriesPoint[]; oversold: boolean }) {
             tickLine={false}
           />
           <ReferenceLine y={70} stroke={C.textFaint} strokeDasharray="2 3" />
-          <ReferenceLine y={30} stroke={oversold ? C.green : C.textFaint} strokeDasharray="2 3" />
+          <ReferenceLine y={30} stroke={refLine30Stroke} strokeDasharray="2 3" />
           <Line
             type="monotone"
             dataKey="rsi"
-            stroke={oversold ? C.green : C.cyan}
+            stroke={rsiStroke}
             dot={false}
             strokeWidth={1.2}
             isAnimationActive={false}
@@ -97,7 +104,7 @@ function Spark({ data, oversold }: { data: SeriesPoint[]; oversold: boolean }) {
   );
 }
 
-function Card({ row }: { row: TickerRow }) {
+function Card({ row, looseWindow }: { row: TickerRow; looseWindow: 3 | 5 }) {
   const { symbol, signal, series, error } = row;
   if (error || !series || series.length === 0) {
     return (
@@ -109,13 +116,20 @@ function Card({ row }: { row: TickerRow }) {
       </div>
     );
   }
-  const os = signal.oversold;
+  // Three-tier visual treatment, with loose checked against the current window:
+  //   strict hit → amber accent (best signal: reversal confirmed)
+  //   loose hit  → cyan accent  (oversold + sideways base forming, no turn yet)
+  //   no hit     → default gray
+  const looseHit = looseWindow === 3 ? signal.loose3 : signal.loose5;
+  const level: SignalLevel = signal.strict ? 'strict' : looseHit ? 'loose' : 'none';
+  const accent = level === 'strict' ? C.amber : level === 'loose' ? C.cyan : null;
+  const hasSignal = accent !== null;
   return (
     <div
       style={{
         background: C.panel,
-        border: `1px solid ${os ? C.amber : C.grid}`,
-        borderLeftWidth: os ? 3 : 1,
+        border: `1px solid ${accent ?? C.grid}`,
+        borderLeftWidth: hasSignal ? 3 : 1,
         padding: '10px 12px 12px',
         height: 256,
       }}
@@ -126,7 +140,7 @@ function Card({ row }: { row: TickerRow }) {
             fontFamily: MONO,
             fontSize: 14,
             fontWeight: 600,
-            color: os ? C.amber : C.text,
+            color: accent ?? C.text,
             letterSpacing: '0.04em',
           }}
         >
@@ -148,7 +162,7 @@ function Card({ row }: { row: TickerRow }) {
       >
         <span>
           RSI{' '}
-          <span style={{ color: os ? C.green : (signal.rsi ?? 100) < 35 ? C.amber : C.text }}>
+          <span style={{ color: level === 'strict' ? C.green : level === 'loose' ? C.amber : C.text }}>
             {signal.rsi?.toFixed(1)}
           </span>
         </span>
@@ -160,7 +174,7 @@ function Card({ row }: { row: TickerRow }) {
           </span>
         </span>
       </div>
-      <Spark data={series} oversold={os} />
+      <Spark data={series} level={level} />
     </div>
   );
 }
@@ -199,7 +213,8 @@ function Legend() {
 export function Dashboard() {
   const [data, setData] = useState<ScanData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('oversold');
+  const [filter, setFilter] = useState<Filter>('strict');
+  const [looseWindow, setLooseWindow] = useState<3 | 5>(3);
 
   useEffect(() => {
     // Cache-bust so refreshes always get the latest checked-in scan.
@@ -214,13 +229,16 @@ export function Dashboard() {
     return [...data.rows].sort((a, b) => {
       if (a.error && !b.error) return 1;
       if (!a.error && b.error) return -1;
-      const aOs = a.signal.oversold ? 1 : 0;
-      const bOs = b.signal.oversold ? 1 : 0;
-      if (aOs !== bOs) return bOs - aOs;
-      // Within hits: lowest RSI first (most oversold). Within non-hits: same.
+      // Tier by current loose window: strict > loose-in-window > none.
+      // Within tier, lowest RSI first (most oversold).
+      const looseA = looseWindow === 3 ? a.signal.loose3 : a.signal.loose5;
+      const looseB = looseWindow === 3 ? b.signal.loose3 : b.signal.loose5;
+      const aTier = a.signal.strict ? 2 : looseA ? 1 : 0;
+      const bTier = b.signal.strict ? 2 : looseB ? 1 : 0;
+      if (aTier !== bTier) return bTier - aTier;
       return (a.signal.rsi ?? 100) - (b.signal.rsi ?? 100);
     });
-  }, [data]);
+  }, [data, looseWindow]);
 
   if (loadError) {
     return (
@@ -241,9 +259,18 @@ export function Dashboard() {
     );
   }
 
-  const osCount = data.rows.filter((r) => r.signal.oversold).length;
+  const strictCount = data.rows.filter((r) => r.signal.strict).length;
+  const looseCount = data.rows.filter((r) =>
+    looseWindow === 3 ? r.signal.loose3 : r.signal.loose5,
+  ).length;
   const errCount = data.rows.filter((r) => r.error).length;
-  const visible = filter === 'oversold' ? sorted.filter((r) => r.signal.oversold) : sorted;
+  const looseHit = (r: TickerRow) => (looseWindow === 3 ? r.signal.loose3 : r.signal.loose5);
+  const visible =
+    filter === 'strict'
+      ? sorted.filter((r) => r.signal.strict)
+      : filter === 'loose'
+      ? sorted.filter(looseHit)
+      : sorted;
 
   return (
     <div
@@ -279,9 +306,21 @@ export function Dashboard() {
           >
             MORNING SCAN · PUT CREDIT SPREADS
           </div>
-          <div style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.01em' }}>
-            Oversold reversal<span style={{ color: C.textFaint }}> / </span>
-            <span style={{ color: C.textDim }}>RSI &lt; 35 ∧ EMA(3) &gt; EMA(8)</span>
+          <div style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+            Oversold reversal
+          </div>
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              color: C.textDim,
+              marginTop: 6,
+              lineHeight: 1.6,
+            }}
+          >
+            <span style={{ color: C.amber }}>STRICT</span> RSI &lt; 35 ∧ EMA(3) &gt; EMA(8)
+            <span style={{ color: C.textFaint, margin: '0 8px' }}>·</span>
+            <span style={{ color: C.cyan }}>LOOSE</span> RSI &lt; 35 ∧ sideways {looseWindow}d after decline
           </div>
         </div>
         <div
@@ -294,8 +333,9 @@ export function Dashboard() {
           }}
         >
           <div>
-            UNIVERSE <span style={{ color: C.text }}>{data.rows.length}</span> · OS{' '}
-            <span style={{ color: C.amber }}>{osCount}</span> · ERR{' '}
+            UNIVERSE <span style={{ color: C.text }}>{data.rows.length}</span> · STRICT{' '}
+            <span style={{ color: C.amber }}>{strictCount}</span> · LOOSE{' '}
+            <span style={{ color: C.cyan }}>{looseCount}</span> · ERR{' '}
             <span style={{ color: errCount ? C.red : C.text }}>{errCount}</span>
           </div>
           <div>
@@ -315,30 +355,81 @@ export function Dashboard() {
           gap: 12,
         }}
       >
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
           {(
             [
-              ['oversold', `OVERSOLD ONLY (${osCount})`],
-              ['all', `ALL (${data.rows.length})`],
+              ['strict', `STRICT (${strictCount})`, C.amber],
+              ['loose', `LOOSE (${looseCount})`, C.cyan],
+              ['all', `ALL (${data.rows.length})`, C.text],
             ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
+          ).map(([key, label, color]) => {
+            const active = filter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                style={{
+                  background: active ? color : 'transparent',
+                  color: active ? C.bg : C.textDim,
+                  border: `1px solid ${active ? color : C.grid}`,
+                  padding: '6px 14px',
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+          {/* LOOSE window toggle: 3d vs 5d */}
+          <div
+            style={{
+              marginLeft: 8,
+              display: 'flex',
+              gap: 0,
+              border: `1px solid ${C.grid}`,
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: '0.08em',
+            }}
+            title="Sideways window for LOOSE signal"
+          >
+            <span
               style={{
-                background: filter === key ? C.amber : 'transparent',
-                color: filter === key ? C.bg : C.textDim,
-                border: `1px solid ${filter === key ? C.amber : C.grid}`,
-                padding: '6px 14px',
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: '0.1em',
-                cursor: 'pointer',
+                padding: '6px 8px',
+                color: C.textFaint,
+                borderRight: `1px solid ${C.grid}`,
               }}
             >
-              {label}
-            </button>
-          ))}
+              SIDEWAYS
+            </span>
+            {([3, 5] as const).map((d) => {
+              const active = looseWindow === d;
+              return (
+                <button
+                  key={d}
+                  onClick={() => setLooseWindow(d)}
+                  style={{
+                    background: active ? C.cyan : 'transparent',
+                    color: active ? C.bg : C.textDim,
+                    border: 'none',
+                    borderRight: d === 3 ? `1px solid ${C.grid}` : 'none',
+                    padding: '6px 10px',
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    cursor: 'pointer',
+                    fontWeight: active ? 600 : 400,
+                  }}
+                >
+                  {d}D
+                </button>
+              );
+            })}
+          </div>
         </div>
         <Legend />
       </div>
@@ -353,7 +444,52 @@ export function Dashboard() {
             border: `1px dashed ${C.grid}`,
           }}
         >
-          No oversold reversal candidates today. Nothing's beaten down enough yet — patience.
+          {filter === 'strict' ? (
+            <>
+              No confirmed reversals today.{' '}
+              {looseCount > 0 ? (
+                <>
+                  Try{' '}
+                  <span
+                    onClick={() => setFilter('loose')}
+                    style={{ color: C.cyan, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    LOOSE
+                  </span>{' '}
+                  — {looseCount} {looseCount === 1 ? 'name has' : 'names have'} sideways {looseWindow}d bases.
+                </>
+              ) : (
+                'Nothing forming bases either — patience.'
+              )}
+            </>
+          ) : filter === 'loose' ? (
+            <>
+              No {looseWindow}-day sideways bases today.{' '}
+              {(() => {
+                const other = looseWindow === 3 ? 5 : 3;
+                const otherCount = data.rows.filter((r) =>
+                  other === 3 ? r.signal.loose3 : r.signal.loose5,
+                ).length;
+                if (otherCount > 0) {
+                  return (
+                    <>
+                      Try{' '}
+                      <span
+                        onClick={() => setLooseWindow(other)}
+                        style={{ color: C.cyan, cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        {other}D
+                      </span>{' '}
+                      — {otherCount} {otherCount === 1 ? 'name' : 'names'} qualify with the longer window.
+                    </>
+                  );
+                }
+                return 'Patience.';
+              })()}
+            </>
+          ) : (
+            <>No data yet.</>
+          )}
         </div>
       )}
 
@@ -365,7 +501,7 @@ export function Dashboard() {
         }}
       >
         {visible.map((row) => (
-          <Card key={row.symbol} row={row} />
+          <Card key={row.symbol} row={row} looseWindow={looseWindow} />
         ))}
       </div>
 
@@ -382,7 +518,7 @@ export function Dashboard() {
       >
         DATA polygon.io · daily adjusted bars · 400-day lookback, last 63 sessions shown<br />
         EMA seed = SMA(period) · RSI = Wilder's smoothed, 14 period<br />
-        SIGNAL oversold reversal ≡ RSI &lt; 35 ∧ EMA(3) &gt; EMA(8) · EXT = (close − EMA17) / EMA17<br />
+        SIGNAL strict ≡ RSI &lt; 35 ∧ EMA(3) &gt; EMA(8) · loose ≡ RSI &lt; 35 ∧ |close − close[Nd ago]| &lt; 3% ∧ close[Nd ago] &lt; close[N+7d ago] · EXT = (close − EMA17) / EMA17<br />
         FETCH GitHub Actions cron, 13:30 UTC weekdays
       </div>
     </div>

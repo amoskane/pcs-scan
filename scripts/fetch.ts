@@ -106,17 +106,38 @@ function buildSeries(bars: AlpacaBar[]): SeriesPoint[] {
 function evaluate(series: SeriesPoint[]): TickerRow['signal'] {
   const latest = series[series.length - 1];
   if (!latest || latest.rsi == null || latest.e3 == null || latest.e8 == null || latest.e17 == null) {
-    return { oversold: false, rsi: null, extPct: null, close: null };
+    return { strict: false, loose3: false, loose5: false, rsi: null, extPct: null, close: null };
   }
-  // Oversold reversal candidate for put credit spreads:
-  //   RSI(14) < 35  (beaten down, not catastrophically — leaves room for bounce)
-  //   AND 3-EMA > 8-EMA  (short-term momentum has turned back up)
-  const oversold = latest.rsi < 35 && latest.e3 > latest.e8;
-  // EXT here = (close - EMA17) / EMA17. Negative means below EMA17 (still in
-  // downtrend's wake); positive means already back above. Useful as "how far
-  // it still has to climb back."
+
+  const isOversold = latest.rsi < 35;
+
+  // STRICT = oversold AND short-term momentum has turned (3-EMA above 8-EMA)
+  const strict = isOversold && latest.e3 > latest.e8;
+
+  // "Sideways after prior decline" base-forming pattern:
+  //   1. Today's close is within ±3% of close from N days ago (flatlined)
+  //   2. The close N days ago is lower than close from N+7 days ago (was falling before)
+  // We use ±3% on the close-to-close move; tighter than ATR-based ranges but
+  // close-only data is what we have and 3% is the user-chosen sloppiness.
+  const FLAT_PCT = 0.03;
+  const isSideways = (windowDays: number): boolean => {
+    const i = series.length - 1;
+    const refIdx = i - windowDays;          // N days ago
+    const priorIdx = refIdx - 7;            // 7 sessions before that — context
+    if (refIdx < 0 || priorIdx < 0) return false;
+    const ref = series[refIdx]?.close;
+    const prior = series[priorIdx]?.close;
+    if (ref == null || prior == null) return false;
+    const flat = Math.abs(latest.close - ref) / ref < FLAT_PCT;
+    const wasFalling = ref < prior;
+    return flat && wasFalling;
+  };
+
+  const loose3 = isOversold && !strict && isSideways(3);
+  const loose5 = isOversold && !strict && isSideways(5);
+
   const extPct = ((latest.close - latest.e17) / latest.e17) * 100;
-  return { oversold, rsi: latest.rsi, extPct, close: latest.close };
+  return { strict, loose3, loose5, rsi: latest.rsi, extPct, close: latest.close };
 }
 
 async function main() {
@@ -134,7 +155,7 @@ async function main() {
       rows.push({
         symbol,
         series: [],
-        signal: { oversold: false, rsi: null, extPct: null, close: null },
+        signal: { strict: false, loose3: false, loose5: false, rsi: null, extPct: null, close: null },
         error: `insufficient bars (${bars.length})`,
       });
       continue;
@@ -147,7 +168,15 @@ async function main() {
     if (lastDate > mostRecentDate) mostRecentDate = lastDate;
 
     rows.push({ symbol, series: displaySeries, signal, error: null });
-    const flag = signal.oversold ? '🟢 OS' : '  --';
+    const flag = signal.strict
+      ? '🟢 STRICT'
+      : signal.loose3 && signal.loose5
+      ? '🟡 LOOSE5+3'
+      : signal.loose5
+      ? '🟡 LOOSE5  '
+      : signal.loose3
+      ? '🟡 LOOSE3  '
+      : '   --     ';
     console.log(
       `  ${symbol.padEnd(6)} ${flag}  RSI ${signal.rsi!.toFixed(1).padStart(5)} ` +
         `EXT ${signal.extPct! >= 0 ? '+' : ''}${signal.extPct!.toFixed(1)}%`,
@@ -164,10 +193,12 @@ async function main() {
   await writeFile(OUTPUT_PATH, JSON.stringify(data, null, 2));
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  const osCount = rows.filter((r) => r.signal.oversold).length;
+  const strictCount = rows.filter((r) => r.signal.strict).length;
+  const loose3Count = rows.filter((r) => r.signal.loose3).length;
+  const loose5Count = rows.filter((r) => r.signal.loose5).length;
   const errCount = rows.filter((r) => r.error).length;
   console.log(
-    `\nDone in ${elapsed}s — ${osCount} oversold, ${errCount} errors, as of ${mostRecentDate}`,
+    `\nDone in ${elapsed}s — ${strictCount} strict, ${loose3Count} loose-3d, ${loose5Count} loose-5d, ${errCount} errors, as of ${mostRecentDate}`,
   );
   console.log(`Wrote ${OUTPUT_PATH}`);
 }

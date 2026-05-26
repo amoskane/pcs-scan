@@ -25,7 +25,9 @@ export type TickerRow = {
   symbol: string;
   series: SeriesPoint[]; // last 63 trading days
   signal: {
-    oversold: boolean;
+    strict: boolean;  // RSI < 35 ∧ EMA(3) > EMA(8) — confirmed reversal
+    loose3: boolean;  // RSI < 35 ∧ sideways 3d after prior decline
+    loose5: boolean;  // RSI < 35 ∧ sideways 5d after prior decline
     rsi: number | null;
     extPct: number | null;
     close: number | null;
